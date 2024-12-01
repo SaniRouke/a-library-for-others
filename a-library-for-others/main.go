@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strings"
@@ -14,21 +13,32 @@ type CSVParser interface {
 }
 
 type csvParser struct {
-	line     string
-	fields   []string
+	lastLine string
+	fields   [][]string
 	lineRead bool
+	name     string
+	age      int
 }
 
 func (p csvParser) ReadLine(r io.Reader) (string, error) {
-	reader := bufio.NewReader(r)
-	line, err := reader.ReadString('\n')
-	if err != nil && err != io.EOF {
-		return "", err
+	b := make([]byte, 1)
+	line := ""
+
+	for {
+		_, err := r.Read(b)
+		if err != nil {
+			return "", err
+		}
+
+		c := string(b[0])
+		if c == "\n" {
+			break
+		}
+
+		line += c
 	}
-	p.line = strings.TrimSuffix(line, "\n")
-	p.fields = strings.Split(p.line, ",")
-	p.lineRead = true
-	return p.line, nil
+
+	return line, nil
 }
 
 func (mp csvParser) GetField(n int) (string, error) {
@@ -44,6 +54,8 @@ func main() {
 	parser = csvParser{}
 
 	reader := strings.NewReader("kek\nasd")
+	reader2 := strings.NewReader("123\n456")
 
 	fmt.Println(parser.ReadLine(reader))
+	fmt.Println(parser.ReadLine(reader2))
 }
